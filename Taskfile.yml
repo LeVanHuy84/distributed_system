@@ -1,0 +1,66 @@
+version: '3'
+
+vars:
+  GRADLE: '{{if eq OS "windows"}}gradlew.bat{{else}}./gradlew{{end}}'
+
+tasks:
+  default:
+    desc: "Liệt kê toàn bộ các lệnh khả dụng"
+    cmds:
+      - task --list
+
+  dev:
+    desc: "Khởi động ứng dụng FlashOrder (Spring Boot)"
+    cmds:
+      - "{{.GRADLE}} bootRun"
+
+  build:
+    desc: "Build dự án và kiểm tra cú pháp (bỏ qua tests)"
+    cmds:
+      - "{{.GRADLE}} build -x test"
+
+  clean:
+    desc: "Xóa sạch thư mục build"
+    cmds:
+      - "{{.GRADLE}} clean"
+
+  test:
+    desc: "Chạy toàn bộ unit tests"
+    cmds:
+      - "{{.GRADLE}} test"
+
+  test:concurrent:
+    desc: "Chạy kiểm thử đa luồng tranh chấp kho (Testcontainers)"
+    cmds:
+      - '{{.GRADLE}} test --tests "*Concurrent*"'
+
+  test:integration:
+    desc: "Chạy toàn bộ integration tests"
+    cmds:
+      - '{{.GRADLE}} test --tests "*Integration*"'
+
+  db:up:
+    desc: "Bật container PostgreSQL phục vụ chạy local dev"
+    cmds:
+      - docker compose up -d postgres
+
+  db:down:
+    desc: "Dừng toàn bộ containers"
+    cmds:
+      - docker compose down
+
+  db:reset:
+    desc: "Xóa sạch dữ liệu và khởi động lại PostgreSQL trắng"
+    cmds:
+      - docker compose down -v
+      - docker compose up -d postgres
+
+  db:psql:
+    desc: "Truy cập trực tiếp vào PostgreSQL CLI bằng psql"
+    cmds:
+      - docker compose exec -it postgres psql -U flashorder -d flashorder_db
+
+  bench:baseline:
+    desc: "[Phase 1] Chạy k6 test: Baseline (100 VUs, 10.000 SKU)"
+    cmds:
+      - echo "Sẽ kích hoạt k6 script cho kịch bản Baseline"
