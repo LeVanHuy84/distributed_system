@@ -38,5 +38,6 @@ dependencies {
 }
 
 tasks.withType<Test> {
-	useJUnitPlatform()
+    useJUnitPlatform()
+    systemProperty("user.timezone", "UTC")
 }
