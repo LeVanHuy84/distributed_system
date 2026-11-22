@@ -65,19 +65,19 @@ Xây dựng tầng truy cập dữ liệu thuần `JdbcTemplate` theo [ADR-0002]
 ### Feature 3: Hiện thực 3 Chiến lược Concurrency (Stock Reservation)
 Trái tim kỹ thuật của Phase 1: Triển khai và so sánh 3 cơ chế kiểm soát tranh chấp.
 
-- [ ] **Task 3.1: Thiết kế Strategy Pattern Interface**
+- [x] **Task 3.1: Thiết kế Strategy Pattern Interface**
   - **Mục tiêu:** Tạo interface `StockReservationStrategy` với method `ReservationResult reserve(String skuId, UUID orderId, int quantity)`.
   - **AC:** Định nghĩa enum `ConcurrencyStrategy` (`OPTIMISTIC`, `PESSIMISTIC`, `ATOMIC_UPDATE`).
-- [ ] **Task 3.2: Strategy 1 - Optimistic Locking**
+- [x] **Task 3.2: Strategy 1 - Optimistic Locking**
   - **Mục tiêu:** Hiện thực kiểm tra tồn kho dựa trên cột `version` và câu lệnh `UPDATE ... WHERE version = ?`.
   - **AC:** Có cơ chế retry với exponential backoff khi gặp `OptimisticLockingFailureException`.
-- [ ] **Task 3.3: Strategy 2 - Pessimistic Locking**
+- [x] **Task 3.3: Strategy 2 - Pessimistic Locking**
   - **Mục tiêu:** Hiện thực khóa dòng bằng `SELECT ... FOR UPDATE`.
   - **AC:** Đặt transaction boundary hợp lý, cấu hình `lock_timeout` để tránh treo connection.
-- [ ] **Task 3.4: Strategy 3 - Atomic Conditional SQL Update**
+- [x] **Task 3.4: Strategy 3 - Atomic Conditional SQL Update**
   - **Mục tiêu:** Thực hiện trừ stock trực tiếp tại database bằng câu lệnh `UPDATE ... WHERE stock >= requested`.
   - **AC:** Kiểm tra `rows_affected == 1` để quyết định thành công, không cần lock tường minh.
-- [ ] **Task 3.5: Strategy Router qua Request Header**
+- [x] **Task 3.5: Strategy Router qua Request Header**
   - **AC:** Cho phép đổi chiến lược động thông qua HTTP Header `X-Concurrency-Strategy`.
 
 ---
