@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  GRADLE: '{{if eq OS "windows"}}gradlew.bat{{else}}./gradlew{{end}}'
+  GRADLE: '{{if eq OS "windows"}}cmd /c gradlew.bat{{else}}./gradlew{{end}}'
 
 tasks:
   default:
@@ -23,6 +23,16 @@ tasks:
     desc: "Xóa sạch thư mục build"
     cmds:
       - "{{.GRADLE}} clean"
+
+  format:
+    desc: "Tự động chuẩn hóa định dạng mã nguồn (Spotless Apply)"
+    cmds:
+      - "{{.GRADLE}} spotlessApply"
+
+  format:check:
+    desc: "Kiểm tra định dạng mã nguồn (Spotless Check)"
+    cmds:
+      - "{{.GRADLE}} spotlessCheck"
 
   test:
     desc: "Chạy toàn bộ unit tests"

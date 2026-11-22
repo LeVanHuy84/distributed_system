@@ -11,58 +11,47 @@ import org.springframework.stereotype.Repository;
 import com.flashorder.order.domain.Order;
 import com.flashorder.order.domain.OrderStatus;
 
-@Repository 
+@Repository
 public class OrderJdbcRepository {
-    private final JdbcTemplate jdbcTemplate;
+	private final JdbcTemplate jdbcTemplate;
 
-    public OrderJdbcRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+	public OrderJdbcRepository(JdbcTemplate jdbcTemplate) {
+		this.jdbcTemplate = jdbcTemplate;
+	}
 
-    private static final RowMapper<Order> ORDER_ROW_MAPPER = (rs, rowNum) -> new Order(
-        rs.getObject("id", UUID.class), 
-        rs.getString("user_id"),
-        OrderStatus.valueOf(rs.getString("status")),
-        rs.getBigDecimal("total_amount"),
-        rs.getTimestamp("created_at").toInstant()
-    );
+	private static final RowMapper<Order> ORDER_ROW_MAPPER = (rs, rowNum) -> new Order(rs.getObject("id", UUID.class),
+			rs.getString("user_id"), OrderStatus.valueOf(rs.getString("status")), rs.getBigDecimal("total_amount"),
+			rs.getTimestamp("created_at").toInstant());
 
-    // 1. Thêm order vào bảng
-    public void save(Order order) {
-        String sql = """
-            INSERT INTO orders (id, user_id, status, total_amount, created_at)
-            VALUES (?, ?, ?, ?, ?)
-            """;
-        
-        jdbcTemplate.update(sql,
-            order.id(),
-            order.userId(),
-            order.status().name(),
-            order.totalAmount(),
-            Timestamp.from(order.createdAt())
-        );
-    }
+	// 1. Thêm order vào bảng
+	public void save(Order order) {
+		String sql = """
+				INSERT INTO orders (id, user_id, status, total_amount, created_at)
+				VALUES (?, ?, ?, ?, ?)
+				""";
 
-    // 2. Tìm kiếm theo orderId
-    public Optional<Order> findById(UUID id) {
-        String sql = """
-            SELECT id, user_id, status, total_amount, created_at
-            FROM orders
-            WHERE id = ?
-            """;
+		jdbcTemplate.update(sql, order.id(), order.userId(), order.status().name(), order.totalAmount(),
+				Timestamp.from(order.createdAt()));
+	}
 
-        return jdbcTemplate.query(sql, ORDER_ROW_MAPPER, id)
-            .stream()
-            .findFirst();
-    }
+	// 2. Tìm kiếm theo orderId
+	public Optional<Order> findById(UUID id) {
+		String sql = """
+				SELECT id, user_id, status, total_amount, created_at
+				FROM orders
+				WHERE id = ?
+				""";
 
-    public int updateStatus(UUID id, OrderStatus status) {
-        String sql = """
-            UPDATE orders
-            SET status = ?
-            WHERE id = ?
-            """;
+		return jdbcTemplate.query(sql, ORDER_ROW_MAPPER, id).stream().findFirst();
+	}
 
-        return jdbcTemplate.update(sql, status.name(), id);
-    }
+	public int updateStatus(UUID id, OrderStatus status) {
+		String sql = """
+				UPDATE orders
+				SET status = ?
+				WHERE id = ?
+				""";
+
+		return jdbcTemplate.update(sql, status.name(), id);
+	}
 }

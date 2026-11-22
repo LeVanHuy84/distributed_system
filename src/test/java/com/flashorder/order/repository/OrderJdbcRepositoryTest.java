@@ -20,68 +20,56 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import(OrderJdbcRepository.class)
 class OrderJdbcRepositoryTest {
 
-    @Autowired
-    private OrderJdbcRepository repository;
+	@Autowired
+	private OrderJdbcRepository repository;
 
-    @Test
-    void shouldSaveAndFindOrderById() {
-        // Arrange
-        UUID orderId = UUID.randomUUID();
-        String userId = "user-" + UUID.randomUUID();
-        BigDecimal amount = new BigDecimal("299.99");
-        Instant now = Instant.now();
+	@Test
+	void shouldSaveAndFindOrderById() {
+		// Arrange
+		UUID orderId = UUID.randomUUID();
+		String userId = "user-" + UUID.randomUUID();
+		BigDecimal amount = new BigDecimal("299.99");
+		Instant now = Instant.now();
 
-        Order order = new Order(
-            orderId,
-            userId,
-            OrderStatus.PENDING,
-            amount,
-            now
-        );
+		Order order = new Order(orderId, userId, OrderStatus.PENDING, amount, now);
 
-        // Act
-        repository.save(order);
-        Optional<Order> result = repository.findById(orderId);
+		// Act
+		repository.save(order);
+		Optional<Order> result = repository.findById(orderId);
 
-        // Assert
-        assertThat(result).isPresent();
-        Order found = result.get();
-        assertThat(found.id()).isEqualTo(orderId);
-        assertThat(found.userId()).isEqualTo(userId);
-        assertThat(found.status()).isEqualTo(OrderStatus.PENDING);
-        assertThat(found.totalAmount()).isEqualByComparingTo(amount);
-    }
+		// Assert
+		assertThat(result).isPresent();
+		Order found = result.get();
+		assertThat(found.id()).isEqualTo(orderId);
+		assertThat(found.userId()).isEqualTo(userId);
+		assertThat(found.status()).isEqualTo(OrderStatus.PENDING);
+		assertThat(found.totalAmount()).isEqualByComparingTo(amount);
+	}
 
-    @Test
-    void shouldUpdateOrderStatus() {
-        // Arrange
-        UUID orderId = UUID.randomUUID();
-        String userId = "user-" + UUID.randomUUID();
-        Order order = new Order(
-            orderId,
-            userId,
-            OrderStatus.PENDING,
-            BigDecimal.valueOf(100.50),
-            Instant.now()
-        );
-        repository.save(order);
+	@Test
+	void shouldUpdateOrderStatus() {
+		// Arrange
+		UUID orderId = UUID.randomUUID();
+		String userId = "user-" + UUID.randomUUID();
+		Order order = new Order(orderId, userId, OrderStatus.PENDING, BigDecimal.valueOf(100.50), Instant.now());
+		repository.save(order);
 
-        // Act
-        int rowsUpdated = repository.updateStatus(orderId, OrderStatus.COMPLETED);
-        Optional<Order> result = repository.findById(orderId);
+		// Act
+		int rowsUpdated = repository.updateStatus(orderId, OrderStatus.COMPLETED);
+		Optional<Order> result = repository.findById(orderId);
 
-        // Assert
-        assertThat(rowsUpdated).isEqualTo(1);
-        assertThat(result).isPresent();
-        assertThat(result.get().status()).isEqualTo(OrderStatus.COMPLETED);
-    }
+		// Assert
+		assertThat(rowsUpdated).isEqualTo(1);
+		assertThat(result).isPresent();
+		assertThat(result.get().status()).isEqualTo(OrderStatus.COMPLETED);
+	}
 
-    @Test
-    void shouldReturnEmptyWhenOrderNotFound() {
-        // Act
-        Optional<Order> result = repository.findById(UUID.randomUUID());
+	@Test
+	void shouldReturnEmptyWhenOrderNotFound() {
+		// Act
+		Optional<Order> result = repository.findById(UUID.randomUUID());
 
-        // Assert
-        assertThat(result).isEmpty();
-    }
+		// Assert
+		assertThat(result).isEmpty();
+	}
 }
