@@ -11,8 +11,8 @@ Tài liệu này theo dõi chi tiết tiến độ triển khai từng Feature v
 | :--- | :--- | :---: | :---: |
 | **Feature 1** | Database Foundation & Flyway Migration | 🟢 Completed | 3/3 |
 | **Feature 2** | Domain Models & Spring JDBC Repositories | 🟢 Completed | 4/4 |
-| **Feature 3** | 3 Concurrency Reservation Strategies | ⚪ Not Started | 0/5 |
-| **Feature 4** | Order Orchestration & Mock Services | ⚪ Not Started | 0/4 |
+| **Feature 3** | 3 Concurrency Reservation Strategies | 🟢 Completed | 5/5 |
+| **Feature 4** | Order Orchestration & Mock Services | 🟢 Completed | 4/4 |
 | **Feature 5** | Reservation TTL & Auto-Release Worker | ⚪ Not Started | 0/3 |
 | **Feature 6** | Concurrent Integration Testing (Testcontainers) | ⚪ Not Started | 0/5 |
 | **Feature 7** | Benchmark Suite (k6) & Performance Analysis | ⚪ Not Started | 0/4 |
@@ -85,13 +85,13 @@ Trái tim kỹ thuật của Phase 1: Triển khai và so sánh 3 cơ chế ki�
 ### Feature 4: Order Orchestration & Mock Boundaries
 Kết nối quy trình đặt hàng và giữ chỗ kho hàng trong kiến trúc Modular Monolith ([ADR-0001](file:///d:/VsCode/Java/distributed_system/docs/adr/0001-modular-monolith-architecture.md)).
 
-- [ ] **Task 4.1: Hiện thực `OrderService`**
+- [x] **Task 4.1: Hiện thực `OrderService`**
   - **AC:** Gọi sang `InventoryService.reserve()`, tạo đơn hàng `PENDING` nếu giữ kho thành công, rollback nếu thất bại.
-- [ ] **Task 4.2: Mock Payment & Mock User Services**
+- [x] **Task 4.2: Mock Payment & Mock User Services**
   - **AC:** Tạo mock service giả lập thanh toán (thành công tức thì hoặc giả lập delay).
-- [ ] **Task 4.3: REST API Controllers**
+- [x] **Task 4.3: REST API Controllers**
   - **AC:** Endpoint `POST /api/v1/orders` (tạo đơn & giữ chỗ), `GET /api/v1/orders/{id}`.
-- [ ] **Task 4.4: Global Exception Handling & Error DTOs**
+- [x] **Task 4.4: Global Exception Handling & Error DTOs**
   - **AC:** Chuyển đổi `InsufficientStockException`, `ConcurrencyConflictException` thành HTTP response rõ ràng (409 Conflict, 400 Bad Request).
 
 ---
