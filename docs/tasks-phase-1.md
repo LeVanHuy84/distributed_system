@@ -111,12 +111,12 @@ Giải quyết bài toán: Không giữ hàng tồn kho vĩnh viễn khi ngườ
 ### Feature 6: Concurrent Testing Suite (Testcontainers)
 Chứng minh hệ thống không bao giờ bán âm (Zero Overselling) dưới áp lực đa luồng.
 
-- [ ] **Task 6.1: Dựng Test Harness Đa luồng (`ConcurrentTestHelper`)**
+- [x] **Task 6.1: Dựng Test Harness Đa luồng (`ConcurrentTestHelper`)**
   - **AC:** Sử dụng `CountDownLatch` / `CompletableFuture` để đồng loạt kích hoạt 200 threads cùng 1 thời điểm.
-- [ ] **Task 6.2: Test Concurrent cho Optimistic Locking**
-- [ ] **Task 6.3: Test Concurrent cho Pessimistic Locking**
-- [ ] **Task 6.4: Test Concurrent cho Atomic Conditional Update**
-- [ ] **Task 6.5: Kiểm chứng Bất biến (Invariant Assertions)**
+- [x] **Task 6.2: Test Concurrent cho Optimistic Locking**
+- [x] **Task 6.3: Test Concurrent cho Pessimistic Locking**
+- [x] **Task 6.4: Test Concurrent cho Atomic Conditional Update**
+- [x] **Task 6.5: Kiểm chứng Bất biến (Invariant Assertions)**
   - **AC:** Khởi tạo stock = 100, 200 requests tranh chấp $\rightarrow$ Đúng 100 thành công, đúng 100 thất bại, tồn khả dụng cuối cùng bằng 0, không có exception unhandled.
 
 ---
