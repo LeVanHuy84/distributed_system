@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,12 +21,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.flashorder.inventory.domain.ReservationResult;
 import com.flashorder.inventory.domain.ReservationStatus;
 import com.flashorder.inventory.exception.InsufficientStockException;
 import com.flashorder.inventory.service.InventoryReservationService;
+import com.flashorder.mock.payment.PaymentGateway;
+import com.flashorder.mock.payment.PaymentResult;
 import com.flashorder.order.domain.Order;
 import com.flashorder.order.domain.OrderStatus;
 import com.flashorder.order.repository.OrderJdbcRepository;
@@ -42,6 +46,9 @@ public class OrderServiceTest {
 
 	@Mock
 	private InventoryReservationService inventoryReservationService;
+
+	@Mock
+	private PaymentGateway paymentGateway;
 
 	@InjectMocks
 	private OrderService orderService;
@@ -122,5 +129,100 @@ public class OrderServiceTest {
 
 		// 3. Then
 		assertThat(result).isEmpty();
+	}
+
+	// Payment mock test
+	// Test 1 - Happy path
+	@Test
+	public void payOrderSuccessAndConfirmedCompletesOrder() {
+		// 1. Given
+		UUID orderId = UUID.randomUUID();
+		Order mockOrder = new Order(orderId, "USER-1", OrderStatus.PENDING, new BigDecimal("2000.00"), Instant.now());
+
+		when(orderJdbcRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+		when(paymentGateway.processPayment(eq(orderId), any()))
+				.thenReturn(new PaymentResult(UUID.randomUUID(), orderId, true, "Success", Instant.now()));
+		when(inventoryReservationService.confirmReservation(orderId)).thenReturn(true);
+
+		// When
+		OrderResult result = orderService.payOrder(orderId);
+
+		// Then
+		assertThat(result.status()).isEqualTo(OrderStatus.COMPLETED);
+
+		verify(orderJdbcRepository, Mockito.times(1)).updateStatus(orderId, OrderStatus.COMPLETED);
+		verify(orderJdbcRepository, Mockito.never()).updateStatus(orderId, OrderStatus.CANCELLED);
+		verify(inventoryReservationService, Mockito.never()).releaseReservationByOrderId(orderId);
+	}
+
+	// Test 2 - The decisive conflict - worker den truoc
+	@Test
+	public void payOrderPaymentSuccessButReservationExpiredCancelsOrder() {
+		// Given
+		UUID orderId = UUID.randomUUID();
+		Order mockOrder = new Order(orderId, "USER-1", OrderStatus.PENDING, new BigDecimal("20000.00"), Instant.now());
+
+		when(orderJdbcRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+		when(paymentGateway.processPayment(eq(orderId), any()))
+				.thenReturn(new PaymentResult(UUID.randomUUID(), orderId, true, "Success", Instant.now()));
+		when(inventoryReservationService.confirmReservation(orderId)).thenReturn(false);
+
+		// when
+		OrderResult result = orderService.payOrder(orderId);
+
+		// then
+		assertThat(result.status()).isEqualTo(OrderStatus.CANCELLED);
+
+		verify(orderJdbcRepository, Mockito.times(1)).updateStatus(orderId, OrderStatus.CANCELLED);
+		verify(orderJdbcRepository, Mockito.never()).updateStatus(orderId, OrderStatus.COMPLETED);
+	}
+
+	// Test 3 - Payment Declined / Thanh toan that bai
+	@Test
+	public void payOrderPaymentDeclinedCancelsOrderAndReleasesStock() {
+		// 1. Given
+		UUID orderId = UUID.randomUUID();
+		Order mockOrder = new Order(orderId, "USER-1", OrderStatus.PENDING, new BigDecimal("2000.00"), Instant.now());
+
+		when(orderJdbcRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+		when(paymentGateway.processPayment(eq(orderId), any()))
+				.thenReturn(new PaymentResult(UUID.randomUUID(), orderId, false, "Card declined", Instant.now()));
+
+		// when
+		OrderResult result = orderService.payOrder(orderId);
+
+		// then
+		assertThat(result.status()).isEqualTo(OrderStatus.CANCELLED);
+
+		verify(orderJdbcRepository, Mockito.atLeastOnce()).updateStatus(orderId, OrderStatus.CANCELLED);
+		verify(inventoryReservationService, Mockito.times(1)).releaseReservationByOrderId(orderId);
+		verify(inventoryReservationService, Mockito.never()).confirmReservation(orderId);
+	}
+
+	// Test 4 - Don hang khong ton tai hoac Status sai
+	@Test
+	public void payOrderOrderNotFoundThrowsIllegalArgumentException() {
+		// Given
+		UUID orderId = UUID.randomUUID();
+		when(orderJdbcRepository.findById(orderId)).thenReturn(Optional.empty());
+
+		// When & Then
+		assertThatThrownBy(() -> orderService.payOrder(orderId)).isInstanceOf(IllegalArgumentException.class);
+
+		verify(paymentGateway, never()).processPayment(any(), any());
+	}
+
+	@Test
+	void payOrder_OrderAlreadyCompleted_ThrowsIllegalStateException() {
+		// GIVEN
+		UUID orderId = UUID.randomUUID();
+		Order completedOrder = new Order(orderId, "USER-1", OrderStatus.COMPLETED, new BigDecimal("2000.00"),
+				Instant.now());
+		when(orderJdbcRepository.findById(orderId)).thenReturn(Optional.of(completedOrder));
+
+		// When & Then
+		assertThatThrownBy(() -> orderService.payOrder(orderId)).isInstanceOf(IllegalStateException.class);
+
+		verify(paymentGateway, never()).processPayment(any(), any());
 	}
 }

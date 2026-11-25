@@ -99,11 +99,11 @@ Kết nối quy trình đặt hàng và giữ chỗ kho hàng trong kiến trúc
 ### Feature 5: Reservation TTL & Auto-Release Worker
 Giải quyết bài toán: Không giữ hàng tồn kho vĩnh viễn khi người dùng bỏ dở thanh toán.
 
-- [ ] **Task 5.1: Thiết kế cơ chế Release Stock**
+- [x] **Task 5.1: Thiết kế cơ chế Release Stock**
   - **AC:** Viết method hoàn trả kho nguyên tử: `UPDATE inventory_items SET reserved_stock = reserved_stock - ?`.
-- [ ] **Task 5.2: Xây dựng Scheduled Worker**
+- [x] **Task 5.2: Xây dựng Scheduled Worker**
   - **AC:** Định kỳ (ví dụ mỗi 30s) quét các reservation có `status = 'RESERVED' AND expires_at < NOW()`.
-- [ ] **Task 5.3: Xử lý tranh chấp giữa Release Worker và Confirm Payment**
+- [x] **Task 5.3: Xử lý tranh chấp giữa Release Worker và Confirm Payment**
   - **AC:** Đảm bảo worker không hủy nhầm một đơn hàng vừa kịp thanh toán thành công.
 
 ---

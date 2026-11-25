@@ -6,4 +6,5 @@ Thư mục này lưu trữ các quyết định kiến trúc quan trọng của 
 | :---: | :--- | :---: | :---: |
 | [ADR-0001](file:///d:/VsCode/Java/distributed_system/docs/adr/0001-modular-monolith-architecture.md) | Khởi đầu bằng Kiến trúc Modular Monolith cho Phase 1 | **Accepted** | 2026-11-12 |
 | [ADR-0002](file:///d:/VsCode/Java/distributed_system/docs/adr/0002-spring-jdbc-over-jpa-for-concurrency-control.md) | Sử dụng Spring Data JDBC & `JdbcTemplate` thay vì Spring Data JPA/Hibernate cho luồng Hotspot | **Accepted** | 2026-11-12 |
+| [ADR-0003](file:///d:/VsCode/Java/distributed_system/docs/adr/0003-scheduled-batch-worker-for-reservation-ttl.md) | Cơ chế Thu hồi Tồn kho quá hạn (Reservation TTL) bằng Scheduled Batch Worker kết hợp Database CAS | **Accepted** | 2026-11-24 |
 

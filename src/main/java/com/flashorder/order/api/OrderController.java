@@ -19,6 +19,7 @@ import com.flashorder.order.api.dto.OrderResponse;
 import com.flashorder.order.service.OrderService;
 import com.flashorder.order.service.dto.CreateOrderCommand;
 import com.flashorder.order.service.dto.CreateOrderResult;
+import com.flashorder.order.service.dto.OrderResult;
 
 import jakarta.validation.Valid;
 
@@ -59,5 +60,11 @@ public class OrderController {
 	public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID id) {
 		return orderService.getOrderById(id).map(OrderResponse::from).map(ResponseEntity::ok)
 				.orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@PostMapping("/{id}/pay")
+	public ResponseEntity<OrderResponse> payOrder(@PathVariable UUID id) {
+		OrderResult result = orderService.payOrder(id);
+		return ResponseEntity.ok(OrderResponse.from(result));
 	}
 }

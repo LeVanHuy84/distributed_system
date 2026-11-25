@@ -153,4 +153,54 @@ public class InventoryJdbcRepository {
 
 		return jdbcTemplate.update(sql, quantity, Timestamp.from(Instant.now()), skuId, quantity);
 	}
+
+	// =============== Release stock ==================
+	public int releaseReservedStock(String skuId, int quantity) {
+		String sql = """
+				UPDATE inventory_items
+				SET reserved_stock = reserved_stock - ?,
+					updated_at = ?
+				WHERE sku_id = ?
+					AND reserved_stock >= ?
+				""";
+
+		return jdbcTemplate.update(sql, quantity, Timestamp.from(Instant.now()), skuId, quantity);
+	}
+
+	public int updateReservationStatusWithCondition(UUID id, ReservationStatus expectedStatus,
+			ReservationStatus newStatus) {
+		String sql = """
+				UPDATE stock_reservations
+				SET status = ?
+				WHERE id = ? AND status = ?
+				""";
+
+		return jdbcTemplate.update(sql, newStatus.name(), id, expectedStatus.name());
+	}
+
+	// Xac nhan kho tai tang Inventory
+	public Optional<StockReservation> findReservationByOrderId(UUID orderId) {
+		String sql = """
+				SELECT id, order_id, sku_id, quantity, status, expires_at, created_at
+				FROM stock_reservations
+				WHERE order_id = ?
+				""";
+
+		return jdbcTemplate.query(sql, RESERVATION_ROW_MAPPER, orderId).stream().findFirst();
+	}
+
+	// Xuat kho chinh thuc
+	public int confirmDeductStock(String skuId, int quantity) {
+		String sql = """
+				UPDATE inventory_items
+				SET total_stock = total_stock - ?,
+					reserved_stock = reserved_stock - ?,
+						updated_at = ?
+				WHERE sku_id = ?
+					AND total_stock >= ?
+					AND reserved_stock >= ?
+				""";
+
+		return jdbcTemplate.update(sql, quantity, quantity, Timestamp.from(Instant.now()), skuId, quantity, quantity);
+	}
 }

@@ -11,7 +11,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.testcontainers.utility.TestcontainersConfiguration;
+import com.flashorder.TestcontainersConfiguration;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -34,14 +34,17 @@ class InventoryJdbcRepositoryTest {
 	 * Tạo inventory riêng cho từng test. Không phụ thuộc vào SKU seed từ Flyway V2.
 	 */
 	private String createTestInventory(int totalStock) {
+		return createTestInventory(totalStock, 0);
+	}
 
+	private String createTestInventory(int totalStock, int reservedStock) {
 		String skuId = "SKU-TEST-" + UUID.randomUUID();
 
 		jdbcTemplate.update("""
 				INSERT INTO inventory_items
 				    (sku_id, name, total_stock, reserved_stock, version)
 				VALUES (?, ?, ?, ?, ?)
-				""", skuId, "Test Product", totalStock, 0, 0);
+				""", skuId, "Test Product", totalStock, reservedStock, 0);
 
 		return skuId;
 	}
@@ -106,5 +109,37 @@ class InventoryJdbcRepositoryTest {
 
 		assertThatThrownBy(() -> repository.createReservation(duplicateReservation))
 				.isInstanceOf(DuplicateKeyException.class);
+	}
+
+	@Test
+	void shouldReleaseReservedStockSuccessfully() {
+		// Arrange
+		String skuId = createTestInventory(100, 10);
+
+		// Act
+		int rowsAffected = repository.releaseReservedStock(skuId, 3);
+
+		// Assert
+		assertThat(rowsAffected).isEqualTo(1);
+
+		var result = repository.findBySkuId(skuId);
+		assertThat(result).isPresent();
+		assertThat(result.get().reservedStock()).isEqualTo(7);
+	}
+
+	@Test
+	void shouldFailToReleaseWhenReservedStockIsInsufficient() {
+		// Arrange
+		String skuId = createTestInventory(100, 10);
+
+		// Act
+		int rowsAffected = repository.releaseReservedStock(skuId, 20);
+
+		// Assert
+		assertThat(rowsAffected).isEqualTo(0);
+
+		var result = repository.findBySkuId(skuId);
+		assertThat(result).isPresent();
+		assertThat(result.get().reservedStock()).isEqualTo(10);
 	}
 }

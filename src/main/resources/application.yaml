@@ -27,3 +27,5 @@ flashorder:
   mock:
     payment:
       delay-ms: 0
+  worker:
+    release-interval-ms: 5000
