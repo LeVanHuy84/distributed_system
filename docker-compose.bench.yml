@@ -1,0 +1,22 @@
+
+services:
+  postgres-bench:
+    image: postgres:16-alpine
+    container_name: flashorder-postgres-bench
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: flashorder_bench
+      POSTGRES_USER: flashorder
+      POSTGRES_PASSWORD: flashorder_password
+    volumes:
+      - postgres_bench_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flashorder -d flashorder_bench"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_bench_data:

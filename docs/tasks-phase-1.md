@@ -124,16 +124,16 @@ Chứng minh hệ thống không bao giờ bán âm (Zero Overselling) dưới �
 ### Feature 7: Benchmark Suite (k6) & Phân tích Hiệu năng
 Vũ khí tạo ấn tượng mạnh nhất trong CV và phỏng vấn.
 
-- [ ] **Task 7.1: Viết 6 Kịch bản k6 scripts (JavaScript)**
-  - [ ] Baseline (100 VUs, 10.000 SKU, 60s)
-  - [ ] Hotspot Low (100 VUs, 100 SKU, 30s)
-  - [ ] Hotspot Medium (500 VUs, 100 SKU, 30s)
-  - [ ] Hotspot High (1.000 VUs, 100 SKU, 30s)
-  - [ ] Extreme Contention (1.000 VUs, 1 SKU, 10s)
-  - [ ] Sustained Load (200 VUs, 5 phút)
-- [ ] **Task 7.2: Tích hợp lệnh Benchmark vào `Taskfile.yml`**
+- [x] **Task 7.1: Viết 6 Kịch bản k6 scripts (JavaScript)**
+  - [x] Baseline (100 VUs, 10.000 SKU, 60s)
+  - [x] Hotspot Low (100 VUs, 100 SKU, 30s)
+  - [x] Hotspot Medium (500 VUs, 100 SKU, 30s)
+  - [x] Hotspot High (1.000 VUs, 100 SKU, 30s)
+  - [x] Extreme Contention (1.000 VUs, 1 SKU, 10s)
+  - [x] Sustained Load (200 VUs, 5 phút)
+- [x] **Task 7.2: Tích hợp lệnh Benchmark vào `Taskfile.yml`**
   - **AC:** Tự động hóa: Reset DB $\rightarrow$ Seed data $\rightarrow$ Warm-up 10s $\rightarrow$ Chạy k6 $\rightarrow$ Xuất summary.
-- [ ] **Task 7.3: Thực hiện đo lường so sánh**
-  - [ ] So sánh 3 chiến lược concurrency (RPS, Latency p50/p95/p99, Error rate).
-  - [ ] So sánh Platform Threads vs Virtual Threads (Java 25).
-- [ ] **Task 7.4: Xuất bản Báo cáo Benchmark tại `docs/learning/benchmark-phase-1.md`**
+- [x] **Task 7.3: Thực hiện đo lường so sánh**
+  - [x] So sánh 3 chiến lược concurrency (RPS, Latency p50/p95/p99, Error rate).
+  - [x] So sánh Platform Threads vs Virtual Threads (Java 25).
+- [x] **Task 7.4: Xuất bản Báo cáo Benchmark tại `docs/learning/benchmark-phase-1.md`**

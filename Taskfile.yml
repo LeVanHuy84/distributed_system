@@ -2,6 +2,11 @@ version: '3'
 
 vars:
   GRADLE: '{{if eq OS "windows"}}cmd /c gradlew.bat{{else}}./gradlew{{end}}'
+  COMPOSE_BENCH: docker compose -f docker-compose.bench.yml
+  K6_DOCKER: >-
+    docker run --rm --add-host=host.docker.internal:host-gateway
+    -v "{{.TASKFILE_DIR}}/benchmarks:/benchmarks"
+    grafana/k6
 
 tasks:
   default:
@@ -70,7 +75,155 @@ tasks:
     cmds:
       - docker compose exec -it postgres psql -U flashorder -d flashorder_db
 
-  bench:baseline:
-    desc: "[Phase 1] Chạy k6 test: Baseline (100 VUs, 10.000 SKU)"
+  bench:db:up:
+    desc: "[Bench] Bật container PostgreSQL riêng cho benchmark (port 5433) và chờ sẵn sàng"
     cmds:
-      - echo "Sẽ kích hoạt k6 script cho kịch bản Baseline"
+      - "{{.COMPOSE_BENCH}} up -d --wait postgres-bench"
+
+  bench:db:down:
+    desc: "[Bench] Dừng container PostgreSQL benchmark"
+    cmds:
+      - "{{.COMPOSE_BENCH}} down"
+
+  bench:db:reset:
+    desc: "[Bench] Xóa sạch volume benchmark và khởi động lại PostgreSQL trắng"
+    cmds:
+      - "{{.COMPOSE_BENCH}} down -v"
+      - task: bench:db:up
+
+  bench:db:psql:
+    desc: "[Bench] Truy cập PostgreSQL CLI của DB benchmark"
+    cmds:
+      - "{{.COMPOSE_BENCH}} exec -it postgres-bench psql -U flashorder -d flashorder_bench"
+
+  bench:app:
+    desc: "[Bench] Khởi động Spring Boot với profile benchmark (VIRTUAL_THREADS=true|false)"
+    env:
+      SPRING_PROFILES_ACTIVE: benchmark
+      SPRING_THREADS_VIRTUAL_ENABLED: '{{.VIRTUAL_THREADS | default "true"}}'
+    cmds:
+      - "{{.GRADLE}} bootRun"
+
+  bench:db:seed:
+    desc: "[Bench] Reset sạch orders/reservations và seed dữ liệu SKU benchmark"
+    preconditions:
+      - sh: >-
+          {{.COMPOSE_BENCH}} exec -T postgres-bench
+          psql -U flashorder -d flashorder_bench -c "SELECT 1 FROM inventory_items LIMIT 1;" > /dev/null 2>&1
+        msg: "Bảng inventory_items chưa tồn tại! Hãy chạy 'task bench:app' ít nhất 1 lần để Flyway tạo schema."
+    cmds:
+      - "{{.COMPOSE_BENCH}} exec -T postgres-bench psql -U flashorder -d flashorder_bench < benchmarks/db/seed-benchmark.sql"
+
+  bench:warmup:
+    desc: "[Bench] Warm-up JVM & HikariCP trong 10s"
+    cmds:
+      - '{{.K6_DOCKER}} run -e STRATEGY={{.STRATEGY | default "ATOMIC_UPDATE"}} -e THREADS_MODE={{.THREADS_MODE | default "virtual"}} /benchmarks/k6/warmup.js'
+
+  bench:run:
+    desc: "[Bench] Pipeline chuẩn: Seed -> Warmup -> k6 Scenario"
+    vars:
+      STRATEGY: '{{.STRATEGY | default "ATOMIC_UPDATE"}}'
+      THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}'
+      SKIP_WARMUP: '{{.SKIP_WARMUP | default "false"}}'
+    preconditions:
+      - sh: 'test -n "{{.SCENARIO}}"'
+        msg: "Thiếu biến SCENARIO (ví dụ: task bench:run SCENARIO=01-baseline)"
+      - sh: "curl -sf http://localhost:8080/actuator/prometheus > /dev/null"
+        msg: "App profile 'benchmark' chưa sẵn sàng! Hãy chạy 'task bench:app' ở terminal khác (không dùng 'task dev')."
+    cmds:
+      - task: bench:db:seed
+      - '{{if ne .SKIP_WARMUP "true"}}{{.K6_DOCKER}} run -e STRATEGY={{.STRATEGY}} -e THREADS_MODE={{.THREADS_MODE}} /benchmarks/k6/warmup.js{{else}}echo "Skipping warm-up (SKIP_WARMUP=true)"{{end}}'
+      - "{{.K6_DOCKER}} run -e STRATEGY={{.STRATEGY}} -e THREADS_MODE={{.THREADS_MODE}} /benchmarks/k6/scenarios/{{.SCENARIO}}.js"
+
+  bench:baseline:
+    desc: "[Bench] 01 - Baseline (100 VUs, 10.000 SKU, 60s)"
+    cmds:
+      - task: bench:run
+        vars: { SCENARIO: "01-baseline", STRATEGY: '{{.STRATEGY | default "ATOMIC_UPDATE"}}', THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}' }
+
+  bench:hotspot-low:
+    desc: "[Bench] 02 - Hotspot Low (100 VUs, 100 SKU, 30s)"
+    cmds:
+      - task: bench:run
+        vars: { SCENARIO: "02-hotspot-low", STRATEGY: '{{.STRATEGY | default "ATOMIC_UPDATE"}}', THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}' }
+
+  bench:hotspot-medium:
+    desc: "[Bench] 03 - Hotspot Medium (500 VUs, 100 SKU, 30s)"
+    cmds:
+      - task: bench:run
+        vars: { SCENARIO: "03-hotspot-medium", STRATEGY: '{{.STRATEGY | default "ATOMIC_UPDATE"}}', THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}' }
+
+  bench:hotspot-high:
+    desc: "[Bench] 04 - Hotspot High (1.000 VUs, 100 SKU, 30s)"
+    cmds:
+      - task: bench:run
+        vars: { SCENARIO: "04-hotspot-high", STRATEGY: '{{.STRATEGY | default "ATOMIC_UPDATE"}}', THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}' }
+
+  bench:extreme:
+    desc: "[Bench] 05 - Extreme Contention (1.000 VUs, 1 SKU, 10s)"
+    cmds:
+      - task: bench:run
+        vars: { SCENARIO: "05-extreme-contention", STRATEGY: '{{.STRATEGY | default "ATOMIC_UPDATE"}}', THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}' }
+
+  bench:sustained:
+    desc: "[Bench] 06 - Sustained Load (200 VUs, 100 SKU, 5m)"
+    cmds:
+      - task: bench:run
+        vars: { SCENARIO: "06-sustained-load", STRATEGY: '{{.STRATEGY | default "ATOMIC_UPDATE"}}', THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}' }
+
+  bench:matrix:
+    desc: "[Bench] Chạy cả 3 strategies cho một SCENARIO (vd: task bench:matrix SCENARIO=05-extreme-contention)"
+    vars:
+      THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}'
+      SKIP_WARMUP: '{{.SKIP_WARMUP | default "false"}}'
+    preconditions:
+      - sh: 'test -n "{{.SCENARIO}}"'
+        msg: "Thiếu biến SCENARIO (ví dụ: task bench:matrix SCENARIO=05-extreme-contention)"
+      - sh: "curl -sf http://localhost:8080/actuator/prometheus > /dev/null"
+        msg: "App profile 'benchmark' chưa sẵn sàng! Hãy chạy 'task bench:app' ở terminal khác (không dùng 'task dev')."
+    cmds:
+      - for: [OPTIMISTIC, PESSIMISTIC, ATOMIC_UPDATE]
+        task: bench:run
+        ignore_error: true
+        vars:
+          SCENARIO: "{{.SCENARIO}}"
+          STRATEGY: "{{.ITEM}}"
+          THREADS_MODE: "{{.THREADS_MODE}}"
+          SKIP_WARMUP: "{{.SKIP_WARMUP}}"
+
+  bench:suite:
+    desc: "[Bench] Chạy trọn bộ 6 kịch bản (01..06) x 3 strategies và verify bất biến DB"
+    vars:
+      THREADS_MODE: '{{.THREADS_MODE | default "virtual"}}'
+      SKIP_WARMUP: '{{.SKIP_WARMUP | default "false"}}'
+    preconditions:
+      - sh: "curl -sf http://localhost:8080/actuator/prometheus > /dev/null"
+        msg: "App profile 'benchmark' chưa sẵn sàng! Hãy chạy 'task bench:app' ở terminal khác (không dùng 'task dev')."
+    cmds:
+      - for:
+          - 01-baseline
+          - 02-hotspot-low
+          - 03-hotspot-medium
+          - 04-hotspot-high
+          - 06-sustained-load
+          - 05-extreme-contention
+        task: bench:matrix
+        ignore_error: true
+        vars:
+          SCENARIO: "{{.ITEM}}"
+          THREADS_MODE: "{{.THREADS_MODE}}"
+          SKIP_WARMUP: "{{.SKIP_WARMUP}}"
+      - task: bench:verify
+
+  bench:verify:
+    desc: "[Bench] Kiểm chứng bất biến Zero-Overselling trong DB benchmark"
+    cmds:
+      - >-
+        {{.COMPOSE_BENCH}} exec -T postgres-bench psql -U flashorder -d flashorder_bench -c
+        "SELECT COUNT(*) AS oversell_violations FROM inventory_items WHERE reserved_stock > total_stock OR reserved_stock < 0;"
+      - >-
+        {{.COMPOSE_BENCH}} exec -T postgres-bench psql -U flashorder -d flashorder_bench -c
+        "SELECT sku_id, total_stock, reserved_stock, version FROM inventory_items WHERE sku_id = 'SKU-EXTREME-001';"
+      - >-
+        {{.COMPOSE_BENCH}} exec -T postgres-bench psql -U flashorder -d flashorder_bench -c
+        "SELECT status, COUNT(*) FROM orders GROUP BY status ORDER BY status;"

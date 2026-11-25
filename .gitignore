@@ -38,3 +38,6 @@ out/
 
 ### Agents
 .agents/
+
+# Benchmark results
+benchmarks/results/*.json

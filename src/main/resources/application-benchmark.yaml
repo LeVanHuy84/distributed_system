@@ -1,0 +1,24 @@
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/flashorder_bench
+
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+
+logging:
+  level:
+    com.flashorder: WARN
+    org.springframework: WARN
+
+server:
+  tomcat:
+    max-keep-alive-requests: -1
+    accept-count: 1024
+    keep-alive-timeout: 60s

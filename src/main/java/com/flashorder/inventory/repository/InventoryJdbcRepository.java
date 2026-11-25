@@ -111,7 +111,7 @@ public class InventoryJdbcRepository {
 				LIMIT ?
 				""";
 
-        return jdbcTemplate.query(sql, RESERVATION_ROW_MAPPER, now, limit);
+        return jdbcTemplate.query(sql, RESERVATION_ROW_MAPPER, Timestamp.from(now), limit);
     }
 
     // Optimistic
