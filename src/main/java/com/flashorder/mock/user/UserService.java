@@ -1,5 +1,5 @@
 package com.flashorder.mock.user;
 
 public interface UserService {
-	boolean validateUser(String userId);
+    boolean validateUser(String userId);
 }

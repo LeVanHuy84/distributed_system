@@ -46,8 +46,9 @@ tasks.withType<Test> {
 spotless {
     java {
         target("src/**/*.java")
-        eclipse()
         removeUnusedImports()
+        palantirJavaFormat("2.103.0").style("PALANTIR")
+        formatAnnotations()
         trimTrailingWhitespace()
         endWithNewline()
     }

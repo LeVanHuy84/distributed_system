@@ -4,5 +4,5 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface PaymentGateway {
-	PaymentResult processPayment(UUID orderId, BigDecimal amount);
+    PaymentResult processPayment(UUID orderId, BigDecimal amount);
 }

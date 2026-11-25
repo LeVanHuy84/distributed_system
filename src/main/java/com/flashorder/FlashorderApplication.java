@@ -8,8 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 public class FlashorderApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(FlashorderApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(FlashorderApplication.class, args);
+    }
 }
