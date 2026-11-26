@@ -14,10 +14,20 @@ tasks:
     cmds:
       - task --list
 
-  dev:
-    desc: "Khởi động ứng dụng FlashOrder (Spring Boot)"
+  dev:order:
+    desc: "Khởi động Order Service (port 8080)"
     cmds:
-      - "{{.GRADLE}} bootRun"
+      - "{{.GRADLE}} :services:order-service:bootRun"
+
+  dev:inventory:
+    desc: "Khởi động Inventory Service (port 8081)"
+    cmds:
+      - "{{.GRADLE}} :services:inventory-service:bootRun"
+
+  dev:payment:
+    desc: "Khởi động Payment Service (port 8082)"
+    cmds:
+      - "{{.GRADLE}} :services:payment-service:bootRun"
 
   build:
     desc: "Build dự án và kiểm tra cú pháp (bỏ qua tests)"
@@ -102,7 +112,7 @@ tasks:
       SPRING_PROFILES_ACTIVE: benchmark
       SPRING_THREADS_VIRTUAL_ENABLED: '{{.VIRTUAL_THREADS | default "true"}}'
     cmds:
-      - "{{.GRADLE}} bootRun"
+      - "{{.GRADLE}} :services:order-service:bootRun"
 
   bench:db:seed:
     desc: "[Bench] Reset sạch orders/reservations và seed dữ liệu SKU benchmark"
