@@ -2,6 +2,7 @@ package com.flashorder.order.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.flashorder.TestcontainersConfiguration;
 import com.flashorder.order.domain.Order;
 import com.flashorder.order.domain.OrderStatus;
 import java.math.BigDecimal;
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.Import;
 
 @JdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(OrderJdbcRepository.class)
+@Import({OrderJdbcRepository.class, TestcontainersConfiguration.class})
 class OrderJdbcRepositoryTest {
 
     @Autowired
