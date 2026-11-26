@@ -1,0 +1,49 @@
+name: FlashOrder CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Format, Build & Test (Java 25 + Testcontainers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Ensure gradlew is executable
+        run: chmod +x gradlew
+
+      - name: Check code formatting (Spotless)
+        run: ./gradlew spotlessCheck --no-daemon
+
+      - name: Run all tests (Unit, Integration & Concurrent Testcontainers)
+        run: ./gradlew test --no-daemon
+
+      - name: Upload test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-test-report
+          path: build/reports/tests/test/
+          retention-days: 7
