@@ -100,7 +100,7 @@ Kế thừa hạ tầng Gradle, `Spotless`, `Taskfile.yml` và `benchmarks/`, t�
 │   └── payment-service/        # Port 8082: Async Payment Worker & Refund Compensation
 ├── benchmarks/                 # Kịch bản k6 Phase 2 mở rộng (5k-10k VUs + E2E lag)
 ├── docs/
-│   ├── adr/                    # Bổ sung ADR-0003..0006 cho các quyết định Phase 2
+│   ├── adr/                    # Bổ sung ADR-0004..0007 cho các quyết định Phase 2
 │   └── learning/               # Báo cáo Benchmark Phase 2 & Phân tích Saga/Outbox
 ├── docker/postgres/            # Init script tạo 3 logical DBs & 3 users phân quyền riêng
 ├── docker-compose.yml          # Postgres (3 isolated DBs), Redis 7, Kafka (KRaft) + profile observability
@@ -220,14 +220,14 @@ Thay vì để `10.000` requests xếp hàng trước HikariCP như Phase 1, lu�
 
 Trong quá trình chuyển sang Design & Plan cho Phase 2, mỗi quyết định trọng yếu sẽ được phản biện ít nhất 2 phương án và ghi nhận thành ADR dưới `docs/adr/`:
 
-1. **ADR-0003: Cơ chế Giữ chỗ Hot-Path (Redis Atomic Lua Script vs Pure PostgreSQL vs Distributed Lock / Redlock)**
+1. **ADR-0004: Cơ chế Giữ chỗ Hot-Path (Redis Atomic Lua Script vs Pure PostgreSQL vs Distributed Lock / Redlock)**
    - Phân tích lý do chọn Lua Script single-node/master trên Redis thay vì Redlock hay giữ nguyên DB.
    - Đánh giá rủi ro Redis mất dữ liệu khi crash (AOF `everysec` vs `always`) và phương án warm-up/reconcile từ PostgreSQL.
-2. **ADR-0004: Đảm bảo Tính Bền vững Sự kiện (Transactional Outbox Polling `SKIP LOCKED` vs Debezium CDC vs Direct Kafka Publish)**
+2. **ADR-0005: Đảm bảo Tính Bền vững Sự kiện (Transactional Outbox Polling `SKIP LOCKED` vs Debezium CDC vs Direct Kafka Publish)**
    - Phân tích chi phí vận hành, độ trễ (latency) và cơ chế ordering.
-3. **ADR-0005: Kiến trúc Saga & Xử lý Hoàn tiền Bù trừ (Saga Orchestration tại `order-service` vs Choreography thuần túy)**
+3. **ADR-0006: Kiến trúc Saga & Xử lý Hoàn tiền Bù trừ (Saga Orchestration tại `order-service` vs Choreography thuần túy)**
    - Phân tích điểm mạnh/yếu khi quản lý state machine phức tạp (`Reservation` + `Payment` + `TTL` + `Refund`).
-4. **ADR-0006: Kiểm soát Concurrency cho Virtual Threads (Semaphore Bulkhead & Kafka Concurrency Tuning vs Unbounded Virtual Threads)**
+4. **ADR-0007: Kiểm soát Concurrency cho Virtual Threads (Semaphore Bulkhead & Kafka Concurrency Tuning vs Unbounded Virtual Threads)**
    - Chứng minh cách khắc phục triệt để lỗi `HikariCP connection-timeout` đã phát hiện trong [benchmark-phase-1.md](learning/benchmark-phase-1.md).
 
 ---
@@ -289,4 +289,4 @@ Bộ benchmark Phase 2 dùng lại môi trường chuẩn từ Phase 1 để so 
 - [ ] Tích hợp **Bulkhead** bảo vệ HikariCP dưới Virtual Threads, xử lý ổn định I/O delay từ `payment-service`.
 - [ ] Tích hợp **Observability** (Micrometer Tracing / `traceId` xuyên HTTP–Outbox–Kafka, Prometheus metrics, Grafana hoặc actuator endpoints).
 - [ ] 100% Integration Tests & Failure Injection / Chaos Tests (Testcontainers) pass, chứng minh Zero Overselling & Zero Lost Orders.
-- [ ] Hoàn thành bộ k6 Benchmark Phase 2 và xuất bản báo cáo so sánh trực diện với Phase 1 tại `docs/learning/benchmark-phase-2.md` cùng các ADR (`ADR-0003`..`ADR-0006`).
+- [ ] Hoàn thành bộ k6 Benchmark Phase 2 và xuất bản báo cáo so sánh trực diện với Phase 1 tại `docs/learning/benchmark-phase-2.md` cùng các ADR (`ADR-0004`..`ADR-0007`).

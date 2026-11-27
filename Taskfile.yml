@@ -80,6 +80,16 @@ tasks:
       - docker compose down -v
       - task: infra:up
 
+  obs:up:
+    desc: "Bật các container Observability"
+    cmds:
+      - docker compose --profile observability up -d
+
+  obs:down:
+    desc: "Tắt các container Observability (giữ nguyên DB/Redis/Kafka)"
+    cmds:
+      - docker compose stop prometheus grafana jaeger
+
   db:up:
     desc: "Bật container PostgreSQL phục vụ chạy local dev"
     cmds:

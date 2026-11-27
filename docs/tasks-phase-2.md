@@ -44,13 +44,13 @@ Tách dự án thành cấu trúc Multi-Module Gradle, chuẩn bị hạ tầng 
   - **Acceptance Criteria (AC):**
     - [ ] `docker compose up -d` mặc định không bật observability stack (giữ RAM tối ưu khi chạy benchmark k6).
     - [ ] `docker compose --profile observability up -d` khởi động thành công Prometheus scrape metrics từ cả 3 services (`8080`, `8081`, `8082`) và Zipkin nhận trace.
-- [ ] **Task 1.4: Soạn thảo Architecture Decision Records (ADR-0003..0006)**
+- [x] **Task 1.4: Soạn thảo Architecture Decision Records (ADR-0004..0007)**
   - **Mục tiêu:** Phản biện tối thiểu 2 phương án và ghi nhận trade-offs cho các bài toán cốt lõi Phase 2 dưới `docs/adr/`.
   - **Acceptance Criteria (AC):**
-    - [ ] `ADR-0003`: Hot-Path Gate (Redis Atomic Lua Script vs Pure DB vs Redlock).
-    - [ ] `ADR-0004`: Event Publishing (Transactional Outbox `SKIP LOCKED` vs Debezium CDC vs Direct Kafka Publish).
-    - [ ] `ADR-0005`: Saga Pattern (Orchestration tại `order-service` vs Choreography thuần túy).
-    - [ ] `ADR-0006`: Virtual Threads Concurrency Control (Semaphore Bulkhead + Rate Limit vs Unbounded Virtual Threads).
+    - [x] `ADR-0004`: Hot-Path Gate (Redis Atomic Lua Script vs Pure DB vs Redlock).
+    - [x] `ADR-0005`: Event Publishing (Transactional Outbox `SKIP LOCKED` vs Debezium CDC vs Direct Kafka Publish).
+    - [x] `ADR-0006`: Saga Pattern (Orchestration tại `order-service` vs Choreography thuần túy).
+    - [x] `ADR-0007`: Virtual Threads Concurrency Control (Semaphore Bulkhead + Rate Limit vs Unbounded Virtual Threads).
 
 ---
 
