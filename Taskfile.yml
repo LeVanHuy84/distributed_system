@@ -14,10 +14,20 @@ tasks:
     cmds:
       - task --list
 
-  dev:
-    desc: "Khởi động ứng dụng FlashOrder (Spring Boot)"
+  dev:order:
+    desc: "Khởi động Order Service (port 8080)"
     cmds:
-      - "{{.GRADLE}} bootRun"
+      - "{{.GRADLE}} :services:order-service:bootRun"
+
+  dev:inventory:
+    desc: "Khởi động Inventory Service (port 8081)"
+    cmds:
+      - "{{.GRADLE}} :services:inventory-service:bootRun"
+
+  dev:payment:
+    desc: "Khởi động Payment Service (port 8082)"
+    cmds:
+      - "{{.GRADLE}} :services:payment-service:bootRun"
 
   build:
     desc: "Build dự án và kiểm tra cú pháp (bỏ qua tests)"
@@ -54,10 +64,36 @@ tasks:
     cmds:
       - '{{.GRADLE}} test --tests "*Integration*"'
 
+  infra:up:
+    desc: "Bật toàn bộ hạ tầng local dev (PostgreSQL, Redis, Kafka) và chờ healthy"
+    cmds:
+      - docker compose up -d --wait
+
+  infra:down:
+    desc: "Dừng toàn bộ hạ tầng local dev"
+    cmds:
+      - docker compose down
+
+  infra:reset:
+    desc: "Xóa sạch toàn bộ volumes và khởi động lại hạ tầng local dev trắng"
+    cmds:
+      - docker compose down -v
+      - task: infra:up
+
+  obs:up:
+    desc: "Bật các container Observability"
+    cmds:
+      - docker compose --profile observability up -d
+
+  obs:down:
+    desc: "Tắt các container Observability (giữ nguyên DB/Redis/Kafka)"
+    cmds:
+      - docker compose stop prometheus grafana jaeger
+
   db:up:
     desc: "Bật container PostgreSQL phục vụ chạy local dev"
     cmds:
-      - docker compose up -d postgres
+      - docker compose up -d --wait postgres
 
   db:down:
     desc: "Dừng toàn bộ containers"
@@ -68,12 +104,31 @@ tasks:
     desc: "Xóa sạch dữ liệu và khởi động lại PostgreSQL trắng"
     cmds:
       - docker compose down -v
-      - docker compose up -d postgres
+      - task: db:up
 
   db:psql:
-    desc: "Truy cập trực tiếp vào PostgreSQL CLI bằng psql"
+    desc: "Truy cập PostgreSQL CLI (mặc định flashorder/flashorder_db; hỗ trợ USER=... DB=...)"
+    vars:
+      DB_USER: '{{.USER | default "flashorder"}}'
+      DB_NAME: '{{.DB | default "flashorder_db"}}'
     cmds:
-      - docker compose exec -it postgres psql -U flashorder -d flashorder_db
+      - docker compose exec -it postgres psql -U {{.DB_USER}} -d {{.DB_NAME}}
+
+  bench:infra:up:
+    desc: "[Bench] Bật toàn bộ hạ tầng benchmark (PostgreSQL, Redis, Kafka) và chờ healthy"
+    cmds:
+      - "{{.COMPOSE_BENCH}} up -d --wait"
+
+  bench:infra:down:
+    desc: "[Bench] Dừng toàn bộ hạ tầng benchmark"
+    cmds:
+      - "{{.COMPOSE_BENCH}} down"
+
+  bench:infra:reset:
+    desc: "[Bench] Xóa sạch volumes benchmark và khởi động lại hạ tầng trắng"
+    cmds:
+      - "{{.COMPOSE_BENCH}} down -v"
+      - task: bench:infra:up
 
   bench:db:up:
     desc: "[Bench] Bật container PostgreSQL riêng cho benchmark (port 5433) và chờ sẵn sàng"
@@ -81,7 +136,7 @@ tasks:
       - "{{.COMPOSE_BENCH}} up -d --wait postgres-bench"
 
   bench:db:down:
-    desc: "[Bench] Dừng container PostgreSQL benchmark"
+    desc: "[Bench] Dừng toàn bộ containers benchmark"
     cmds:
       - "{{.COMPOSE_BENCH}} down"
 
@@ -92,9 +147,12 @@ tasks:
       - task: bench:db:up
 
   bench:db:psql:
-    desc: "[Bench] Truy cập PostgreSQL CLI của DB benchmark"
+    desc: "[Bench] Truy cập PostgreSQL CLI của DB benchmark (hỗ trợ USER=... DB=...)"
+    vars:
+      DB_USER: '{{.USER | default "flashorder"}}'
+      DB_NAME: '{{.DB | default "flashorder_bench"}}'
     cmds:
-      - "{{.COMPOSE_BENCH}} exec -it postgres-bench psql -U flashorder -d flashorder_bench"
+      - "{{.COMPOSE_BENCH}} exec -it postgres-bench psql -U {{.DB_USER}} -d {{.DB_NAME}}"
 
   bench:app:
     desc: "[Bench] Khởi động Spring Boot với profile benchmark (VIRTUAL_THREADS=true|false)"
@@ -102,7 +160,7 @@ tasks:
       SPRING_PROFILES_ACTIVE: benchmark
       SPRING_THREADS_VIRTUAL_ENABLED: '{{.VIRTUAL_THREADS | default "true"}}'
     cmds:
-      - "{{.GRADLE}} bootRun"
+      - "{{.GRADLE}} :services:order-service:bootRun"
 
   bench:db:seed:
     desc: "[Bench] Reset sạch orders/reservations và seed dữ liệu SKU benchmark"
