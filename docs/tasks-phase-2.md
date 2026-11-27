@@ -27,18 +27,18 @@ Tài liệu này theo dõi chi tiết tiến độ triển khai từng Feature v
 ### Feature 1: Multi-Module Refactoring, Distributed Infra & ADRs
 Tách dự án thành cấu trúc Multi-Module Gradle, chuẩn bị hạ tầng container phân tán tiết kiệm tài nguyên và chốt các Architecture Decision Records trước khi code.
 
-- [ ] **Task 1.1: Chuyển đổi cấu trúc sang Multi-Module Gradle**
+- [x] **Task 1.1: Chuyển đổi cấu trúc sang Multi-Module Gradle**
   - **Mục tiêu:** Tổ chức codebase thành `platform/common-events`, `platform/common-observability`, `services/order-service`, `services/inventory-service`, `services/payment-service`.
   - **Acceptance Criteria (AC):**
-    - [ ] `settings.gradle.kts` và `build.gradle.kts` (root + subprojects) build sạch với `./gradlew build -x test`.
-    - [ ] Không có dependency chéo trực tiếp giữa `order-service`, `inventory-service` và `payment-service`.
-    - [ ] `Spotless` (Palantir Java Format) hoạt động đồng bộ trên toàn bộ subprojects.
-- [ ] **Task 1.2: Cấu hình Docker Compose Phân tán (`docker-compose.yml` & `docker-compose.bench.yml`)**
+    - [x] `settings.gradle.kts` và `build.gradle.kts` (root + subprojects) build sạch với `./gradlew build -x test`.
+    - [x] Không có dependency chéo trực tiếp giữa `order-service`, `inventory-service` và `payment-service`.
+    - [x] `Spotless` (Palantir Java Format) hoạt động đồng bộ trên toàn bộ subprojects.
+- [x] **Task 1.2: Cấu hình Docker Compose Phân tán (`docker-compose.yml` & `docker-compose.bench.yml`)**
   - **Mục tiêu:** Khởi tạo hạ tầng gồm PostgreSQL 16 (3 logical DBs cô lập), Redis 7, và Apache Kafka (KRaft mode).
   - **Acceptance Criteria (AC):**
-    - [ ] Script init SQL tạo `order_db`, `inventory_db`, `payment_db` với 3 user/role phân quyền riêng biệt (service này không đọc được DB của service kia).
-    - [ ] Redis 7 bật AOF persistence (`appendonly yes`) và có healthcheck.
-    - [ ] Kafka chạy KRaft mode (không Zookeeper) với healthcheck sẵn sàng cho local dev và benchmark.
+    - [x] Script init SQL tạo `order_db`, `inventory_db`, `payment_db` với 3 user/role phân quyền riêng biệt (service này không đọc được DB của service kia).
+    - [x] Redis 7 bật AOF persistence (`appendonly yes`) và có healthcheck.
+    - [x] Kafka chạy KRaft mode (không Zookeeper) với healthcheck sẵn sàng cho local dev và benchmark.
 - [ ] **Task 1.3: Cấu hình Docker Profile `observability` (On-Demand)**
   - **Mục tiêu:** Thêm Prometheus, Grafana và Zipkin vào `docker-compose.yml` dưới `profiles: ["observability"]`.
   - **Acceptance Criteria (AC):**

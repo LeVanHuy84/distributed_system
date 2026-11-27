@@ -41,3 +41,9 @@ out/
 
 # Benchmark results
 benchmarks/results/*.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
